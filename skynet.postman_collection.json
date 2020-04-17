@@ -1,0 +1,840 @@
+{
+	"info": {
+		"_postman_id": "83c4e580-961c-4bbb-863a-cb4436fb6a00",
+		"name": "Skynet API test suite",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Random",
+			"item": [
+				{
+					"name": "Search",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "baeffd29-2a43-4164-b0d1-49cb72d829be",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "38967182-5156-4cb3-96ff-1b794efec1de",
+								"exec": [
+									"var response = pm.response.json();",
+									"var hotelID = pm.variables.get(\"hotel_id\");",
+									"",
+									"pm.test(\"has at least basic response fields\", function () {",
+									"    pm.expect(Object.keys(response)).to.include('packages') &&",
+									"    pm.expect(Object.keys(response)).to.include('comparison_rates');",
+									"})",
+									"",
+									"pm.test(\"returns non-empty packages for hotel provided\", function () {",
+									"    pm.expect(response.packages[hotelID]).not.to.be.empty;",
+									"})",
+									"",
+									"pm.test(\"respond below randomization limit\", function() {",
+									"    // 30000ms is Skynet ceiling for random response time",
+									"    pm.expect(pm.response.responseTime).to.be.below(31000)    ",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"params\": {\n\t\t\"check_in_date\": \"{{check_in_date}}\",\n\t\t\"check_out_date\": \"{{check_out_date}}\",\n\t\t\"room_count\": 1,\n\t\t\"adult_count\": 1,\n\t\t\"currency\": \"{{currency}}\",\n\t\t\"locale\": \"en-us\",\n\t\t\"include_details\": false,\n\t\t\"include_room_images\": false,\n\t\t\"enable_room_map\": false,\n\t\t\"enable_rate_map\": false,\n\t\t\"partner_hotel_ids\": [\"{{hotel_id}}\"],\n\t\t\"hotel_id_list\": [\"{{hotel_id}}\"]\n\t},\n\t\"config\": {\n\t\t\"credentials\": {\n\t\t\t\"partner_code\": \"sample\",\n\t\t\t\"supplier_code\": \"sample\",\n\t\t\t\"id\": 37,\n\t\t\t\"details\": {\n\t\t\t\t\"username\":\"test\",\n\t\t\t\t\"password\":\"zumata\"\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{skynet_host}}/search",
+							"host": [
+								"{{skynet_host}}"
+							],
+							"path": [
+								"search"
+							]
+						},
+						"description": "Random response latency"
+					},
+					"response": []
+				},
+				{
+					"name": "AdditionalInfo",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "f6ad21d3-4563-48a4-bd89-658a1ca2f1d7",
+								"exec": [
+									"var host = pm.collectionVariables.get(\"skynet_host\")",
+									"var checkIn = pm.collectionVariables.get(\"check_in_date\")",
+									"var checkOut = pm.collectionVariables.get(\"check_out_date\")",
+									"var currency = pm.collectionVariables.get(\"currency\")",
+									"var hotelID = pm.variables.get(\"hotel_id\")",
+									"var response;",
+									"",
+									"const searchRequest = {",
+									"  url: `${host}/search`,",
+									"  method: 'POST',",
+									"  header: 'Content-Type:application/json',",
+									"  body: {",
+									"    mode: 'raw',",
+									"    raw: {",
+									"    \t\"params\": {",
+									"    \t\t\"check_in_date\": checkIn,",
+									"    \t\t\"check_out_date\": checkOut,",
+									"    \t\t\"room_count\": 1,",
+									"    \t\t\"adult_count\": 1,",
+									"    \t\t\"currency\": currency,",
+									"    \t\t\"locale\": \"en-us\",",
+									"    \t\t\"include_details\": false,",
+									"    \t\t\"include_room_images\": false,",
+									"    \t\t\"enable_room_map\": false,",
+									"    \t\t\"enable_rate_map\": false,",
+									"    \t\t\"partner_hotel_ids\": [hotelID],",
+									"    \t\t\"hotel_id_list\": [hotelID]",
+									"    \t},",
+									"    \t\"config\": {",
+									"    \t\t\"credentials\": {",
+									"    \t\t\t\"partner_code\": \"sample\",",
+									"    \t\t\t\"supplier_code\": \"sample\",",
+									"    \t\t\t\"id\": 37,",
+									"    \t\t\t\"details\": {",
+									"    \t\t\t\t\"username\":\"test\",",
+									"    \t\t\t\t\"password\":\"zumata\"",
+									"    \t\t\t}",
+									"    \t\t}",
+									"    \t}",
+									"    }",
+									"  }",
+									"};",
+									"",
+									"pm.sendRequest(searchRequest, function (err, res) {",
+									"  if (err) {",
+									"      console.log(\"error executing pre-request search\", err)",
+									"  } else {",
+									"      response = res.json()",
+									"      pm.variables.set(\"package\", JSON.stringify(response.packages[hotelID][0]))",
+									"  }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "f4e0ad34-4100-4119-939f-178b8cf4ff0b",
+								"exec": [
+									"var moment = require('moment');",
+									"var response = pm.response.json();",
+									"",
+									"function hasValidCPBands(policy) {",
+									"    len = policy.cancellation_policies.length",
+									"    ",
+									"    for (var i = 0; i < len-1; i++) {",
+									"        var earlier = policy.cancellation_policies[i],",
+									"            later = policy.cancellation_policies[i+1],",
+									"            earlierDateFrom = moment(earlier.date_from, \"YYYY-MM-DDTHH:mm:ssZ\"),",
+									"            earlierDateTo = moment(earlier.date_to, \"YYYY-MM-DDTHH:mm:ssZ\"),",
+									"            laterDateFrom = moment(later.date_from, \"YYYY-MM-DDTHH:mm:ssZ\"),",
+									"            laterDateTo = moment(later.date_to, \"YYYY-MM-DDTHH:mm:ssZ\");",
+									"",
+									"        if (!earlierDateFrom.isBefore(earlierDateTo)) {",
+									"            return false",
+									"        } else if (!laterDateFrom.isBefore(laterDateTo)) {",
+									"            return false",
+									"        } else if (earlierDateTo.add(1, 'seconds').isBefore(laterDateFrom)) {",
+									"            return false",
+									"        }",
+									"    }",
+									"    ",
+									"    return true",
+									"}",
+									"",
+									"pm.test(\"has at least basic response fields\", function () {",
+									"    pm.expect(Object.keys(response)).to.include('supplier_sell_rate') &&",
+									"    pm.expect(Object.keys(response)).to.include('cancellation_policy');",
+									"})",
+									"",
+									"pm.test(\"returns valid cancellation policy\", function () {",
+									"    pm.expect(response.cancellation_policy.remarks).not.to.be.empty &&",
+									"    pm.expect(response.cancellation_policy.cancellation_policies).not.to.be.empty &&",
+									"    pm.expect(hasValidCPBands(response.cancellation_policy)).to.be.true;",
+									"})",
+									"",
+									"pm.test(\"respond within limit\", function() {",
+									"    // we add no delay to response but put in 2000ms just to be sure",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000)",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"search_params\": {\n\t\t\"check_in_date\": \"{{check_in_date}}\",\n\t\t\"check_out_date\": \"{{check_out_date}}\",\n\t\t\"room_count\": 1,\n\t\t\"adult_count\": 1,\n\t\t\"currency\": \"{{currency}}\",\n\t\t\"locale\": \"en-us\",\n\t\t\"include_details\": false,\n\t\t\"include_room_images\": false,\n\t\t\"enable_room_map\": false,\n\t\t\"enable_rate_map\": false,\n\t\t\"partner_hotel_ids\": [\"{{hotel_id}}\"],\n\t\t\"hotel_id_list\": [\"{{hotel_id}}\"]\n\t},\n\t\"package\": {{package}},\n\t\"config\": {\n\t\t\"credentials\": {\n\t\t\t\"partner_code\": \"sample\",\n\t\t\t\"supplier_code\": \"sample\",\n\t\t\t\"id\": 148,\n\t\t\t\"details\": {\n\t\t\t}\n\t\t}\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{skynet_host}}/additional_info",
+							"host": [
+								"{{skynet_host}}"
+							],
+							"path": [
+								"additional_info"
+							]
+						},
+						"description": "assert only common response"
+					},
+					"response": []
+				},
+				{
+					"name": "Book",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "41b78752-0c54-4fe9-bcbb-cd296c40b37e",
+								"exec": [
+									"var host = pm.collectionVariables.get(\"skynet_host\")",
+									"var checkIn = pm.collectionVariables.get(\"check_in_date\")",
+									"var checkOut = pm.collectionVariables.get(\"check_out_date\")",
+									"var currency = pm.collectionVariables.get(\"currency\")",
+									"var hotelID = pm.variables.get(\"hotel_id\")",
+									"var response;",
+									"",
+									"const searchRequest = {",
+									"  url: `${host}/search`,",
+									"  method: 'POST',",
+									"  header: 'Content-Type:application/json',",
+									"  body: {",
+									"    mode: 'raw',",
+									"    raw: {",
+									"    \t\"params\": {",
+									"    \t\t\"check_in_date\": checkIn,",
+									"    \t\t\"check_out_date\": checkOut,",
+									"    \t\t\"room_count\": 1,",
+									"    \t\t\"adult_count\": 1,",
+									"    \t\t\"currency\": currency,",
+									"    \t\t\"locale\": \"en-us\",",
+									"    \t\t\"include_details\": false,",
+									"    \t\t\"include_room_images\": false,",
+									"    \t\t\"enable_room_map\": false,",
+									"    \t\t\"enable_rate_map\": false,",
+									"    \t\t\"partner_hotel_ids\": [hotelID],",
+									"    \t\t\"hotel_id_list\": [hotelID]",
+									"    \t},",
+									"    \t\"config\": {",
+									"    \t\t\"credentials\": {",
+									"    \t\t\t\"partner_code\": \"sample\",",
+									"    \t\t\t\"supplier_code\": \"sample\",",
+									"    \t\t\t\"id\": 37,",
+									"    \t\t\t\"details\": {",
+									"    \t\t\t\t\"username\":\"test\",",
+									"    \t\t\t\t\"password\":\"zumata\"",
+									"    \t\t\t}",
+									"    \t\t}",
+									"    \t}",
+									"    }",
+									"  }",
+									"};",
+									"",
+									"",
+									"pm.sendRequest(searchRequest, function (err, res) {",
+									"  if (err) {",
+									"      console.log(\"error executing pre-request search\", err)",
+									"  } else {",
+									"      response = res.json();",
+									"      pm.variables.set(\"package\", JSON.stringify(response.packages[hotelID][0]))",
+									"",
+									"      let additionalInfoRequest = {",
+									"          url: `${host}/additional_info`,",
+									"          method: 'POST',",
+									"          header: 'Content-Type:application/json',",
+									"          body: {",
+									"            mode: 'raw',",
+									"            raw: {",
+									"            \t\"search_params\": {",
+									"            \t\t\"check_in_date\": checkIn,",
+									"            \t\t\"check_out_date\": checkOut,",
+									"            \t\t\"room_count\": 1,",
+									"            \t\t\"adult_count\": 1,",
+									"            \t\t\"currency\": currency,",
+									"            \t\t\"locale\": \"en-us\",",
+									"            \t\t\"partner_hotel_ids\": [hotelID],",
+									"            \t\t\"hotel_id_list\": [hotelID]",
+									"            \t},",
+									"            \t\"package\": response.packages[hotelID][0],",
+									"            \t\"config\": {",
+									"            \t\t\"credentials\": {",
+									"            \t\t\t\"partner_code\": \"sample\",",
+									"            \t\t\t\"supplier_code\": \"sample\",",
+									"            \t\t\t\"id\": 148,",
+									"            \t\t\t\"details\": {}",
+									"            \t\t}",
+									"            \t}",
+									"            }",
+									"          }",
+									"        };",
+									"      ",
+									"      pm.sendRequest(additionalInfoRequest, function (err, res) {",
+									"        if (err) {",
+									"            console.log(\"error executing pre-request additional_info\", err)",
+									"        } else {",
+									"            response = res.json();",
+									"            var pkg = JSON.parse(pm.variables.get(\"package\"))",
+									"            pkg.additional_info.cancellation_policy = response.cancellation_policy",
+									"",
+									"            pm.variables.set(\"package\", JSON.stringify(pkg))",
+									"        }",
+									"      })",
+									"  }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "2d3dda10-a7ed-4f1c-b7d8-a2062ed8404d",
+								"exec": [
+									"var response = pm.response.json()",
+									"",
+									"pm.test(\"has at least basic response fields\", function () {",
+									"    pm.expect(Object.keys(response)).to.include('supplier_details') &&",
+									"    pm.expect(Object.keys(response)).to.include('status') &&",
+									"    pm.expect(Object.keys(response)).to.include('confirmation_details') &&",
+									"    pm.expect(Object.keys(response)).to.include('additional_details');",
+									"})",
+									"",
+									"pm.variables.set(\"booking_id\", response.supplier_details.booking_id)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"search\": {\n\t\t\"check_in_date\": \"{{check_in_date}}\",\n\t\t\"check_out_date\": \"{{check_out_date}}\",\n\t\t\"room_count\": 1,\n\t\t\"adult_count\": 1,\n\t\t\"currency\": \"{{currency}}\",\n\t\t\"partner_hotel_ids\": [\"{{hotel_id}}\"],\n\t\t\"hotel_id_list\": [\"{{hotel_id}}\"]\n\t},\n\t\"room_lead_guests\": [\n\t\t{\n\t\t\t\"first_name\": \"Test\",\n\t\t\t\"last_name\": \"Skynet\"\n\t\t}\n\t],\n\t\"contact_person\": {\n\t\t\"first_name\": \"Joseph\",\n\t\t\"last_name\": \"Smith\",\n\t\t\"email\": \"nonexistent.email@zumata.com\",\n\t\t\"remarks\": \"yet another test booking\",\n\t\t\"contact_no\": \"987654321\"\n\t},\n\t\"package\": {{package}},\n\t\"config\": {\n\t\t\"credentials\": {\n\t\t\t\"partner_code\": \"test\",\n\t\t\t\"supplier_code\": \"test\",\n\t\t\t\"id\": 148,\n\t\t\t\"details\": {}\n\t\t}\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{skynet_host}}/book",
+							"host": [
+								"{{skynet_host}}"
+							],
+							"path": [
+								"book"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Status",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "92e730bd-ab48-436e-bcbc-244faf1f7d5f",
+								"exec": [
+									"var moment = require('moment');",
+									"",
+									"var confirmedAt = moment().add(-121, 'seconds').format(\"YYYY-MM-DDTHH:mm:ssZ\")",
+									"",
+									"pm.variables.set(\"confirmed_at\", confirmedAt)"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "3167b18d-95ed-42b9-b178-d19a811a681b",
+								"exec": [
+									"var moment = require('moment');",
+									"",
+									"var response = pm.response.json();",
+									"",
+									"pm.test(\"returns status 1/confirmed when confirmed_at 2mins earlier than query time\", function() {",
+									"    var confirmedAt = moment(pm.variables.get(\"confirmed_at\"), \"YYYY-MM-DDTHH:mm:ssZ\")",
+									"    ",
+									"    if (confirmedAt.isBefore(moment().add(-120, 'seconds'))) {",
+									"        pm.expect(response.status.code).to.equal(1)",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"additional_references\": {\n\t\t\"hotel_id\": \"{{hotel_id}}\",\n        \"confirmed_at\": \"{{confirmed_at}}\",\n        \"booking_id\": \"{{booking_id}}\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{skynet_host}}/status",
+							"host": [
+								"{{skynet_host}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ed90b87f-fec8-429e-a02a-08d8cc69ead7",
+								"exec": [
+									"var response = pm.response.json()",
+									"",
+									"pm.test(\"returns minimum response fields\", function() {",
+									"    pm.expect(Object.keys(response)).includes('api_penalty_handling');",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"package\": {\n\t\t\"hotel_id\": \"{{hotel_id}}\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{skynet_host}}/cancel",
+							"host": [
+								"{{skynet_host}}"
+							],
+							"path": [
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "cac1ea52-cd2d-47a0-a9a8-53fb36aed859",
+						"type": "text/javascript",
+						"exec": [
+							"pm.variables.set(\"hotel_id\", \"reFn\");"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "9e23d902-0f22-4e1c-a4c5-1ec19271739f",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "PLPo, 7uLH",
+			"item": [
+				{
+					"name": "Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Book",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						},
+						"description": "`PLPo`: Booking will always takes more than 60 seconds to complete.\n\n`7uLH`: Booking will always take more than 60 seconds to complete and will respond with an empty result until it completes.\n\nBasically these two are same behavior. Whether the API responds with an empty result depends on whether a previous request has already been cached."
+					},
+					"response": []
+				}
+			],
+			"description": "Booking response always takes longer than 60s",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "5d1d201e-02a0-4fd4-85b2-3f78a2f840bd",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "10bb54ad-9e23-4003-be63-c7ecd99310f7",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "dnhy",
+			"item": [],
+			"description": "Booking initially returns pending",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "23f72dba-94c3-4b32-af40-40f76b70c496",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "37a2fda7-9397-480d-876d-405c7fd509c3",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "9CPH",
+			"item": [],
+			"description": "Additional Info (booking policy) always return with higher price",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "a1ec3e6e-3ec7-4a17-b8db-6831e42c11fa",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "8402c9a2-25df-4562-ae4a-8fd331eab469",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "fst1",
+			"item": [],
+			"description": "Search response ~500ms, JPY property",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c0a8c44e-5849-4343-931e-c3fb9eb6756f",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "cd6cb545-3153-4d03-a649-48644c54cb04",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "fst2",
+			"item": [],
+			"description": "Search response ~2s, JPY property",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "90c534d9-3bff-4b69-b8bb-3b555cac4cae",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "46b455a9-c428-4f89-b84f-3cd2d520e099",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "fst4",
+			"item": [],
+			"description": "Search response ~4s, JPY property",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "8a050c96-a5b0-43a3-8447-d02d854ee35e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "6e828308-be77-4a88-b094-1de8edf79133",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "TJRf",
+			"item": [],
+			"description": "Behaviour:\n\tSearch response ~2m\n\tJPY currency\n\tCP fully refundable 10 days before check-in date",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "9149e5f6-1017-4622-9dd3-29d3bf433e08",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "dad8a71b-2f79-498e-a1b6-05a7e09c765d",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "KQQR",
+			"item": [],
+			"description": "Behavior:\n    Property take 2 second to return result on search \n    10 days before fully refundable\n    5 days before 50% refundable\n    3 days before non-refundable\n    JPY in currency"
+		},
+		{
+			"name": "SvBX",
+			"item": [],
+			"description": "Behavior:\n\tSearch response ~2s\n\tJPY currency\n\tCP non-refundable"
+		},
+		{
+			"name": "enCd",
+			"item": [],
+			"description": "Behavior:\n\trate type: pay_at_hotel\n\tJPY currency\n\trequires the following encrypted_card fields (booking request) to be non-empty:\n\t    card_holder_name \n\t    card_holder_id_card      \n\t    mobile_phone \n\t    card_type\n\t    card_number\n\t    series_code\n\t    expire_date",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "0cb045f7-8ebe-4df3-a03c-3a592fb32d56",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "8fdfebd1-5ddf-4b4e-a01c-d872f9226801",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "pst2",
+			"item": [],
+			"description": "Behavior:\n\trate type: pay_at_hotel\n\tcurrency: JPY\n\trequires the following field in book request, otherwise return an error\n\t\t```{\n\t\t\"encrypted_card\": {\n\t\t  \"encrypted_card_token\": \"xxx\" // token\n\t\t  }\n\t\t}```"
+		},
+		{
+			"name": "reFn",
+			"item": [],
+			"description": "Behavior:\n    4 days before fully refundable\n    3 days before 50% refundable / 50% cancellation fee\n    2 days before 30% refundable / 70% cancellation fee\n    1 days before non-refundable\n    JPY currency"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "80324349-ddb1-429a-81e3-84efeed22e81",
+				"type": "text/javascript",
+				"exec": [
+					"var mo = Number(pm.collectionVariables.get(\"checkin_months_offset\"))",
+					"var dao = Number(pm.collectionVariables.get(\"checkin_days_offset\"))",
+					"var nights = Number(pm.collectionVariables.get(\"nights\"))",
+					"",
+					"var checkIn = new Date();",
+					"checkIn.setMonth(checkIn.getMonth() + mo);",
+					"checkIn.setDate(checkIn.getDate() + dao);",
+					"",
+					"var checkInStr = `${checkIn.getFullYear()}-${('0' + (checkIn.getMonth()+1)).slice(-2)}-${('0' + checkIn.getDate()).slice(-2)}`",
+					"",
+					"var checkOut = new Date();",
+					"checkOut.setFullYear(checkIn.getFullYear());",
+					"checkOut.setMonth(checkIn.getMonth())",
+					"checkOut.setDate(checkIn.getDate() + nights);",
+					"var checkOutStr = `${checkOut.getFullYear()}-${('0' + (checkOut.getMonth()+1)).slice(-2)}-${('0' + checkOut.getDate()).slice(-2)}`",
+					"",
+					"pm.collectionVariables.set(\"check_in_date\", checkInStr);",
+					"pm.collectionVariables.set(\"check_out_date\", checkOutStr);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "a83c2167-8ed7-43c2-83a6-fe0027f424b1",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "6f2623ab-9b49-4326-a543-af763e95e542",
+			"key": "checkin_months_offset",
+			"value": "3",
+			"type": "string"
+		},
+		{
+			"id": "ac97cfb8-2572-43f4-bac3-987f7b1c1c58",
+			"key": "checkin_days_offset",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"id": "0b4617f0-0ea2-4424-ab6c-f68e176e296b",
+			"key": "nights",
+			"value": "3",
+			"type": "string"
+		},
+		{
+			"id": "6bfc8913-c287-472c-8310-fe78a3455b0d",
+			"key": "check_in_date",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "fe5e1268-42ca-4eb9-96a1-9bf024036432",
+			"key": "check_out_date",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "bf9d772e-04e0-4a37-aec0-f922f9cfc8c8",
+			"key": "currency",
+			"value": "USD",
+			"type": "string"
+		},
+		{
+			"id": "f9d0d97d-7693-4ec8-b86f-f91e0cdf3762",
+			"key": "skynet_host",
+			"value": "localhost:3002",
+			"type": "string"
+		}
+	]
+}
